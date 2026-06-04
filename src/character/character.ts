@@ -2,10 +2,15 @@ export class Character {
   constructor(
     public readonly health: number = 1000,
     public readonly level: number = 1,
+    public readonly damageSurvived: number = 0,
   ) {}
 
   get alive(): boolean {
     return this.health > 0;
+  }
+
+  get maxHealth(): number {
+    return this.level >= 6 ? 1500 : 1000;
   }
 }
 
