@@ -171,4 +171,33 @@ When publishing to GitHub Packages (`https://npm.pkg.github.com`):
 - **Package name must be scoped:** `@owner/package-name` — unscoped names return `404 Not Found` on publish.
 - **`GITHUB_TOKEN` is sufficient for auth** in the same repo — no separate `NPM_TOKEN` secret is needed when `packages: write` is granted in the workflow `permissions` block.
   - Pattern: `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}`
-- **Do not set `NPM_CONFIG_REGISTRY` to an empty string** — if the secret is unset, the empty value can override the `.npmrc` created by `setup-node`. Only set it when the secret exists.
+- **Never set `NPM_CONFIG_REGISTRY` unless the secret is guaranteed non-empty** — an empty value overrides the registry set by `setup-node` / `publishConfig`.
+
+## 16. Agent Workflow: Always Use Branches and PRs
+
+**Never push directly to `main`.** The correct workflow is:
+
+```powershell
+# 1. Create a short-lived branch (kebab-case, prefixed with ticket or topic)
+git checkout -b fix/my-change
+
+# 2. Make changes, stage, commit (conventional commit via git-commit skill)
+git add <files>
+git commit -m "fix: ..."
+
+# 3. Push branch and create PR
+git push -u origin fix/my-change
+gh pr create --fill
+
+# 4. Enable auto-merge — PR merges automatically when CI passes
+gh pr merge --auto --rebase
+```
+
+Rules:
+
+- One logical change per branch
+- Branch names: `fix/`, `feat/`, `chore/`, `docs/` prefix
+- Delete branch after merge (repo already configured `delete_branch_on_merge: true`)
+- **Never use `git push origin main`** — use PRs so the user can see and review changes
+
+This applies even in autopilot mode.

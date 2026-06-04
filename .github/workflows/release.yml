@@ -1,8 +1,15 @@
 name: Release
 
 on:
-  push:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
     branches: [main]
+
+# Prevent two releases racing if commits land quickly.
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -15,11 +22,14 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    # Only run if CI checks pass (ci.yml runs first on same push)
+    # Only publish when CI passed — never on a failing build.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+          # Check out the exact commit CI ran against, not whatever HEAD is now.
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -35,5 +45,3 @@ jobs:
           # Fall back to GITHUB_TOKEN so GitHub Packages works without a separate NPM_TOKEN secret.
           # Set NPM_TOKEN in repo secrets to publish to a private registry instead.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
-          # Only override the registry when an explicit secret is provided.
-          NPM_CONFIG_REGISTRY: ${{ secrets.NPM_REGISTRY_URL }}
