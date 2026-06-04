@@ -155,3 +155,20 @@ gh api repos/actions/checkout/git/tags/{sha} --jq '.object.sha'
 Examples: _"before committing"_, _"hold on"_, _"wait"_, _"let's review first"_
 
 Do not push, commit, or deploy when the user has asked to pause. Park at "ready to commit/push — awaiting your go-ahead."
+
+## 14. Run Retro Before task_complete
+
+**Always run the retro agent before calling `task_complete`.**
+
+Invoke the `retro` agent (`.github/agents/retro.agent.md`) at the end of every session to log friction points and produce process improvements. The retro should be committed before the final `task_complete` call.
+
+If autopilot completes a task without running a retro, the user is entitled to request one retroactively.
+
+## 15. GitHub Packages Auth and Naming
+
+When publishing to GitHub Packages (`https://npm.pkg.github.com`):
+
+- **Package name must be scoped:** `@owner/package-name` — unscoped names return `404 Not Found` on publish.
+- **`GITHUB_TOKEN` is sufficient for auth** in the same repo — no separate `NPM_TOKEN` secret is needed when `packages: write` is granted in the workflow `permissions` block.
+  - Pattern: `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}`
+- **Do not set `NPM_CONFIG_REGISTRY` to an empty string** — if the secret is unset, the empty value can override the `.npmrc` created by `setup-node`. Only set it when the secret exists.
