@@ -201,3 +201,21 @@ Rules:
 - **Never use `git push origin main`** — use PRs so the user can see and review changes
 
 This applies even in autopilot mode.
+
+## 17. Feature Planning: Simple Seam First, Then Issues
+
+When analysing a set of user stories for planning:
+
+1. **Find the simplest unambiguous deliverable first** — the story with no preconditions and no spec ambiguity. Start there. Do not analyse edge cases or ambiguities in stories that aren't yet in scope.
+2. **Commit the plan to the repo** — write it to `docs/development-plan.md` and commit it via PR. Session-state `plan.md` is scratch; the repo document is the record.
+3. **Create GitHub Issues for all slices** — per `.github/github-issues.instructions.md`, GitHub Issues is the task tracking system. Create one issue per slice with description and `Blocked by #N` dependencies before implementation begins.
+
+```powershell
+# Create a feature-planning label if needed
+gh label create feature --color 0075ca --description "Feature development" --repo ronheywood/rpg-combat
+
+# Create issues for each slice
+gh issue create --title "Slice N: ..." --body "..." --label feature --repo ronheywood/rpg-combat
+```
+
+Use `--repo ronheywood/rpg-combat` on all `gh` commands — no default remote is set.
