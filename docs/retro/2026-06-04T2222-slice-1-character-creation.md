@@ -38,6 +38,21 @@ Planned and implemented Slice 1 (Issue #12): Character Creation using TDD. First
 | #4       | (no action)                           | Acceptable race; `gh pr create` still succeeds; warning is cosmetic                     |
 
 | #5 | `.github/copilot-instructions.md` §16 | Added: use `gh pr checks <number> --watch --repo ronheywood/rpg-combat` — blocks until all checks complete, exits non-zero on failure |
+| #6 | Rubber duck not run before implementation — issues found post-release required `v2.0.0` breaking change | No instruction required rubber duck at plan-approval time; only required it at task_complete | Missing process step |
+
+---
+
+## Additional Outcome (rubber duck post-implementation)
+
+The rubber duck was run after implementation (user prompted). It found:
+
+- `alive` stored independently creates impossible state (`{ health: 0, alive: true }`) — **fixed**: `Character` refactored to class with `get alive() { return this.health > 0 }`
+- No singleton independence test — **fixed**: added `creates independent instances` test
+- Published barrel (`src/index.ts`) untested — **fixed**: added `src/index.test.ts`
+
+This required a `BREAKING CHANGE` commit → `v2.0.0`. Would have been free to fix if rubber duck ran before coding.
+
+**Process fix:** §14a added to `copilot-instructions.md` — rubber duck runs after plan approval, before any code is written.
 
 ---
 
