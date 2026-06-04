@@ -1,1 +1,2 @@
-// RPG Combat engine — implementation goes here
+export type { Character } from './character/index.js';
+export { createCharacter } from './character/index.js';
