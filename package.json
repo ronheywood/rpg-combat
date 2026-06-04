@@ -1,5 +1,5 @@
 {
-  "name": "rpg-combat",
+  "name": "@ronheywood/rpg-combat",
   "version": "0.1.0",
   "type": "module",
   "publishConfig": {
