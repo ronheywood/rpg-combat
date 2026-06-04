@@ -199,6 +199,9 @@ Rules:
 - Branch names: `fix/`, `feat/`, `chore/`, `docs/` prefix
 - Delete branch after merge (repo already configured `delete_branch_on_merge: true`)
 - **Never use `git push origin main`** — use PRs so the user can see and review changes
+- **`gh pr merge` requires a PR number when using `--repo`**: `gh pr merge <number> --auto --rebase --repo ronheywood/rpg-combat`
+- **Run `npm run coverage` before pushing** — `npm run checks` uses `npm test` (no coverage); CI will fail if coverage drops below 90% even when checks pass locally
+- **Never use `Start-Sleep` to wait for CI** — use `gh pr checks <number> --watch --repo ronheywood/rpg-combat` instead. It blocks until all checks complete and exits non-zero on failure. No arbitrary sleep needed.
 
 This applies even in autopilot mode.
 
