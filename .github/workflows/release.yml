@@ -32,5 +32,8 @@ jobs:
       - run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Fall back to GITHUB_TOKEN so GitHub Packages works without a separate NPM_TOKEN secret.
+          # Set NPM_TOKEN in repo secrets to publish to a private registry instead.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          # Only override the registry when an explicit secret is provided.
           NPM_CONFIG_REGISTRY: ${{ secrets.NPM_REGISTRY_URL }}
