@@ -20,7 +20,7 @@ Sprint Zero is complete. The CD pipeline (CI, release, branch protection, conven
 ## User Story Map
 
 ```
-Slice 1: Character Creation
+Slice 1: Character Creation        ← ✅ DONE (v2.0.0)
   └─ Slice 2: Damage + Self-Heal
         ├─ Slice 3: Level Effects
         ├─ Slice 4: Factions

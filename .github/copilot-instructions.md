@@ -164,6 +164,20 @@ Invoke the `retro` agent (`.github/agents/retro.agent.md`) at the end of every s
 
 If autopilot completes a task without running a retro, the user is entitled to request one retroactively.
 
+## 14a. Run Rubber Duck Before Implementation
+
+**For every non-trivial implementation, run the rubber duck agent AFTER the plan is approved but BEFORE writing any code.**
+
+The plan approval is the highest-leverage moment. Issues found before coding are free to fix; issues found after a release (as happened in Slice 1) require a breaking change.
+
+Trigger: plan exits plan mode with approval → rubber duck → implement.
+
+Skip for trivial single-file changes with no design decisions. Do not skip for:
+
+- Any new type, class, or bounded context
+- Any change to a published API surface
+- Any cross-cutting concern (damage bridge, faction rules, etc.)
+
 ## 15. GitHub Packages Auth and Naming
 
 When publishing to GitHub Packages (`https://npm.pkg.github.com`):
