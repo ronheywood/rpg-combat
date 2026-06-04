@@ -6,19 +6,29 @@ function assertValidAmount(amount: number): void {
   }
 }
 
+function levelModifier(attacker: Character, target: Character): number {
+  const gap = target.level - attacker.level;
+  if (gap >= 5) return 0.5;
+  if (gap <= -5) return 1.5;
+  return 1.0;
+}
+
 export function dealDamage(attacker: Character, target: Character, amount: number): Character {
   if (attacker === target) throw new Error('A character cannot deal damage to itself');
   assertValidAmount(amount);
 
-  const newHealth = Math.max(0, target.health - amount);
-  return new Character(newHealth, target.level);
+  const actualDamage = amount * levelModifier(attacker, target);
+  const newHealth = Math.max(0, target.health - actualDamage);
+  const survived = newHealth > 0;
+  const newDamageSurvived = survived ? target.damageSurvived + actualDamage : target.damageSurvived;
+
+  return new Character(newHealth, target.level, newDamageSurvived);
 }
 
 export function heal(character: Character, amount: number): Character {
   if (!character.alive) throw new Error('Dead characters cannot heal');
   assertValidAmount(amount);
 
-  const maxHealth = 1000;
-  const newHealth = Math.min(maxHealth, character.health + amount);
-  return new Character(newHealth, character.level);
+  const newHealth = Math.min(character.maxHealth, character.health + amount);
+  return new Character(newHealth, character.level, character.damageSurvived);
 }
