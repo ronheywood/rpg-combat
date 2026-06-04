@@ -22,7 +22,7 @@ Sprint Zero is complete. The CD pipeline (CI, release, branch protection, conven
 ```
 Slice 1: Character Creation        ← ✅ DONE (v2.0.0)
   └─ Slice 2: Damage + Self-Heal   ← ✅ DONE (v1.2.0)
-        ├─ Slice 3: Level Effects
+        ├─ Slice 3: Level Effects  ← ✅ DONE (v1.3.0)
         ├─ Slice 4: Factions
         ├─ Slice 5: Magical Objects (parallelisable with 3 & 4)
         └─ (3 + 4) ─ Slice 6: Changing Level
