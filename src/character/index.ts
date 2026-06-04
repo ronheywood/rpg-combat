@@ -1,2 +1,1 @@
-export type { Character } from './character.js';
-export { createCharacter } from './character.js';
+export { Character, createCharacter } from './character.js';
