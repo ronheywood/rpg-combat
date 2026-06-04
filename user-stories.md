@@ -2,7 +2,6 @@
 
 This is a description of the business rules we should support in the game engine.
 
-
 ## Damage and Health
 
 1. All Characters, when created, have:
@@ -42,7 +41,7 @@ This is a description of the business rules we should support in the game engine
 1. As well as Characters there are also Magical Objects
    - Magical Objects have Health
    - The maximum amount of Health is fixed at the time the object is created
-   - When reduced to 0 Health, Magical Objects are *Destroyed*
+   - When reduced to 0 Health, Magical Objects are _Destroyed_
    - Magical Objects cannot be Healed by Characters
    - Magical Objects do not belong to Factions; they are neutral
 
@@ -67,4 +66,3 @@ This is a description of the business rules we should support in the game engine
 
 3. The maximum Level for Characters is 10
    - Characters cannot lose a level they have gained
-
