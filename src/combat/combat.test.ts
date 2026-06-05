@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Character, createCharacter } from '../character/index.js';
 import { Faction, joinFaction, leaveFaction } from '../character/index.js';
 import { MagicalWeapon, HealingObject } from '../objects/index.js';
-import { dealDamage, heal, allyHeal, useWeapon, healFromObject } from './combat.js';
+import { dealDamage, heal, useWeapon, healFromObject } from './combat.js';
 
 describe('dealDamage', () => {
   it('reduces target health by the damage amount', () => {
@@ -118,13 +118,13 @@ describe('dealDamage — ally guard', () => {
   });
 });
 
-describe('allyHeal', () => {
+describe('heal — ally healing', () => {
   it('heals target when both characters share a faction', () => {
     const healer = createCharacter();
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
     faction = joinFaction(target, faction)[1];
-    expect(allyHeal(healer, target, 100, [faction]).health).toBe(900);
+    expect(heal(healer, target, 100, [faction]).health).toBe(900);
   });
 
   it('health cannot exceed target maxHealth (1000 for level 1-5)', () => {
@@ -132,7 +132,7 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(950);
     faction = joinFaction(target, faction)[1];
-    expect(allyHeal(healer, target, 200, [faction]).health).toBe(1000);
+    expect(heal(healer, target, 200, [faction]).health).toBe(1000);
   });
 
   it('health cannot exceed target maxHealth (1500 for level 6+)', () => {
@@ -140,7 +140,7 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(1400, 6);
     faction = joinFaction(target, faction)[1];
-    expect(allyHeal(healer, target, 200, [faction]).health).toBe(1500);
+    expect(heal(healer, target, 200, [faction]).health).toBe(1500);
   });
 
   it('preserves target id after ally heal', () => {
@@ -148,7 +148,7 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
     faction = joinFaction(target, faction)[1];
-    expect(allyHeal(healer, target, 100, [faction]).id).toBe(target.id);
+    expect(heal(healer, target, 100, [faction]).id).toBe(target.id);
   });
 
   it('preserves target damageSurvived after ally heal', () => {
@@ -156,7 +156,7 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800, 1, 200);
     faction = joinFaction(target, faction)[1];
-    expect(allyHeal(healer, target, 100, [faction]).damageSurvived).toBe(200);
+    expect(heal(healer, target, 100, [faction]).damageSurvived).toBe(200);
   });
 
   it('throws when healer is dead', () => {
@@ -164,7 +164,7 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
     faction = joinFaction(target, faction)[1];
-    expect(() => allyHeal(healer, target, 100, [faction])).toThrow(/dead/i);
+    expect(() => heal(healer, target, 100, [faction])).toThrow(/dead/i);
   });
 
   it('throws when target is dead', () => {
@@ -172,19 +172,19 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(0);
     faction = joinFaction(target, faction)[1];
-    expect(() => allyHeal(healer, target, 100, [faction])).toThrow(/dead/i);
+    expect(() => heal(healer, target, 100, [faction])).toThrow(/dead/i);
   });
 
   it('throws when characters share no faction', () => {
     const healer = createCharacter();
     const target = new Character(800);
-    expect(() => allyHeal(healer, target, 100, [])).toThrow(/allies/i);
+    expect(() => heal(healer, target, 100, [])).toThrow(/allies/i);
   });
 
-  it('throws when healer tries to heal themselves via allyHeal', () => {
+  it('healer can heal themselves even when factions are passed', () => {
     const healer = new Character(800);
-    const [, faction] = joinFaction(healer, new Faction('Knights'));
-    expect(() => allyHeal(healer, healer, 100, [faction])).toThrow(/self/i);
+    const [updatedHealer, faction] = joinFaction(healer, new Faction('Knights'));
+    expect(heal(updatedHealer, updatedHealer, 100, [faction]).health).toBe(900);
   });
 
   it('throws on invalid amount before checking ally status', () => {
@@ -192,7 +192,7 @@ describe('allyHeal', () => {
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
     faction = joinFaction(target, faction)[1];
-    expect(() => allyHeal(healer, target, NaN, [faction])).toThrow(/amount/i);
+    expect(() => heal(healer, target, NaN, [faction])).toThrow(/amount/i);
   });
 });
 
@@ -285,12 +285,6 @@ describe('heal', () => {
   it('preserves character level after healing', () => {
     const damaged = new Character(800, 3);
     expect(heal(damaged, damaged, 100).level).toBe(3);
-  });
-
-  it('throws when healer and target are different characters', () => {
-    const character = new Character(800, 1);
-    const other = new Character(800, 1);
-    expect(() => heal(character, other, 100)).toThrow(/self-healing/i);
   });
 
   it('dead characters cannot heal', () => {

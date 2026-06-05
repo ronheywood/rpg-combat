@@ -4,9 +4,8 @@ import {
   Faction,
   HealingObject,
   MagicalWeapon,
-  allyHeal,
-  applyLevelUp,
   areAllies,
+  applyLevelUp,
   createCharacter,
   damageThreshold,
   dealDamage,
@@ -59,12 +58,12 @@ describe('package barrel exports', () => {
     expect(heal(character, character, 100).health).toBe(900);
   });
 
-  it('exports allyHeal', () => {
+  it('exports heal for ally healing', () => {
     const healer = createCharacter();
     let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
     faction = joinFaction(target, faction)[1];
-    expect(allyHeal(healer, target, 100, [faction]).health).toBe(900);
+    expect(heal(healer, target, 100, [faction]).health).toBe(900);
   });
 
   it('exports HealingObject', () => {
