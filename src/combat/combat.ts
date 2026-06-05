@@ -18,7 +18,13 @@ function levelModifier(attacker: Character, target: Character): number {
 
 function applyHeal(character: Character, amount: number): Character {
   const newHealth = Math.min(character.maxHealth, character.health + amount);
-  return new Character(newHealth, character.level, character.damageSurvived, character.id);
+  return new Character(
+    newHealth,
+    character.level,
+    character.damageSurvived,
+    character.id,
+    character.factionsEverJoined,
+  );
 }
 
 export function dealDamage(
@@ -36,7 +42,13 @@ export function dealDamage(
   const survived = newHealth > 0;
   const newDamageSurvived = survived ? target.damageSurvived + actualDamage : target.damageSurvived;
 
-  return new Character(newHealth, target.level, newDamageSurvived, target.id);
+  return new Character(
+    newHealth,
+    target.level,
+    newDamageSurvived,
+    target.id,
+    target.factionsEverJoined,
+  );
 }
 
 export function heal(character: Character, amount: number): Character {
@@ -86,6 +98,7 @@ export function healFromObject(
     character.level,
     character.damageSurvived,
     character.id,
+    character.factionsEverJoined,
   );
   const updatedObject = new HealingObject(object.maxHealth, object.health - healing);
   return { character: updatedCharacter, object: updatedObject };

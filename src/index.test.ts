@@ -5,9 +5,12 @@ import {
   HealingObject,
   MagicalWeapon,
   allyHeal,
+  applyLevelUp,
   areAllies,
   createCharacter,
+  damageThreshold,
   dealDamage,
+  factionThreshold,
   heal,
   healFromObject,
   joinFaction,
@@ -30,20 +33,20 @@ describe('package barrel exports', () => {
 
   it('exports joinFaction', () => {
     const character = createCharacter();
-    const faction = joinFaction(character, new Faction('Knights'));
+    const [, faction] = joinFaction(character, new Faction('Knights'));
     expect(faction.memberIds).toContain(character.id);
   });
 
   it('exports leaveFaction', () => {
     const character = createCharacter();
-    const faction = joinFaction(character, new Faction('Knights'));
+    const [, faction] = joinFaction(character, new Faction('Knights'));
     expect(leaveFaction(character, faction).memberIds).not.toContain(character.id);
   });
 
   it('exports areAllies', () => {
     const a = createCharacter();
     const b = createCharacter();
-    const faction = joinFaction(b, joinFaction(a, new Faction('Knights')));
+    const [, faction] = joinFaction(b, joinFaction(a, new Faction('Knights'))[1]);
     expect(areAllies(a, b, [faction])).toBe(true);
   });
 
@@ -57,9 +60,9 @@ describe('package barrel exports', () => {
 
   it('exports allyHeal', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(allyHeal(healer, target, 100, [faction]).health).toBe(900);
   });
 
@@ -90,5 +93,20 @@ describe('package barrel exports', () => {
     const result = healFromObject(character, object, 100);
     expect(result.character.health).toBe(900);
     expect(result.object.health).toBe(100);
+  });
+
+  it('exports applyLevelUp', () => {
+    const char = new Character(1000, 1, 1000);
+    expect(applyLevelUp(char).level).toBe(2);
+  });
+
+  it('exports damageThreshold', () => {
+    expect(damageThreshold(1)).toBe(1000);
+    expect(damageThreshold(2)).toBe(3000);
+  });
+
+  it('exports factionThreshold', () => {
+    expect(factionThreshold(1)).toBe(3);
+    expect(factionThreshold(2)).toBe(6);
   });
 });

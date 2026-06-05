@@ -73,9 +73,9 @@ describe('dealDamage', () => {
 
   it('throws on invalid amount before checking ally status', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
     expect(() => dealDamage(a, b, NaN, [faction])).toThrow(/amount/i);
   });
 });
@@ -83,9 +83,9 @@ describe('dealDamage', () => {
 describe('dealDamage — ally guard', () => {
   it('throws when attacker and target share a faction', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
     expect(() => dealDamage(a, b, 100, [faction])).toThrow();
   });
 
@@ -104,15 +104,15 @@ describe('dealDamage — ally guard', () => {
   it('does not throw when characters share no faction', () => {
     const a = createCharacter();
     const b = createCharacter();
-    const faction = joinFaction(a, new Faction('Knights'));
+    const [, faction] = joinFaction(a, new Faction('Knights'));
     expect(() => dealDamage(a, b, 100, [faction])).not.toThrow();
   });
 
   it('allows damage after one character leaves the shared faction', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
     faction = leaveFaction(b, faction);
     expect(() => dealDamage(a, b, 100, [faction])).not.toThrow();
   });
@@ -121,57 +121,57 @@ describe('dealDamage — ally guard', () => {
 describe('allyHeal', () => {
   it('heals target when both characters share a faction', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(allyHeal(healer, target, 100, [faction]).health).toBe(900);
   });
 
   it('health cannot exceed target maxHealth (1000 for level 1-5)', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(950);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(allyHeal(healer, target, 200, [faction]).health).toBe(1000);
   });
 
   it('health cannot exceed target maxHealth (1500 for level 6+)', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(1400, 6);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(allyHeal(healer, target, 200, [faction]).health).toBe(1500);
   });
 
   it('preserves target id after ally heal', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(allyHeal(healer, target, 100, [faction]).id).toBe(target.id);
   });
 
   it('preserves target damageSurvived after ally heal', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800, 1, 200);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(allyHeal(healer, target, 100, [faction]).damageSurvived).toBe(200);
   });
 
   it('throws when healer is dead', () => {
     const healer = new Character(0);
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(() => allyHeal(healer, target, 100, [faction])).toThrow(/dead/i);
   });
 
   it('throws when target is dead', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(0);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(() => allyHeal(healer, target, 100, [faction])).toThrow(/dead/i);
   });
 
@@ -183,15 +183,15 @@ describe('allyHeal', () => {
 
   it('throws when healer tries to heal themselves via allyHeal', () => {
     const healer = new Character(800);
-    const faction = joinFaction(healer, new Faction('Knights'));
+    const [, faction] = joinFaction(healer, new Faction('Knights'));
     expect(() => allyHeal(healer, healer, 100, [faction])).toThrow(/self/i);
   });
 
   it('throws on invalid amount before checking ally status', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const target = new Character(800);
-    faction = joinFaction(target, faction);
+    faction = joinFaction(target, faction)[1];
     expect(() => allyHeal(healer, target, NaN, [faction])).toThrow(/amount/i);
   });
 });
@@ -370,18 +370,18 @@ describe('useWeapon', () => {
 
   it('throws when attacker and target are allies', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
     const weapon = new MagicalWeapon(100, 5);
     expect(() => useWeapon(a, weapon, b, [faction])).toThrow();
   });
 
   it('allows weapon attack after target leaves the faction', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
     faction = leaveFaction(b, faction);
     const weapon = new MagicalWeapon(100, 5);
     expect(() => useWeapon(a, weapon, b, [faction])).not.toThrow();

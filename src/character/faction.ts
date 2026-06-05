@@ -1,4 +1,4 @@
-import type { Character } from './character.js';
+import { Character } from './character.js';
 
 export class Faction {
   public readonly memberIds: readonly string[];
@@ -14,9 +14,18 @@ export class Faction {
   }
 }
 
-export function joinFaction(character: Character, faction: Faction): Faction {
-  if (faction.memberIds.includes(character.id)) return faction;
-  return new Faction(faction.name, [...faction.memberIds, character.id]);
+export function joinFaction(character: Character, faction: Faction): [Character, Faction] {
+  if (faction.memberIds.includes(character.id)) return [character, faction];
+  const updatedFaction = new Faction(faction.name, [...faction.memberIds, character.id]);
+  const updatedFactionsEverJoined = [...new Set([...character.factionsEverJoined, faction.name])];
+  const updatedCharacter = new Character(
+    character.health,
+    character.level,
+    character.damageSurvived,
+    character.id,
+    updatedFactionsEverJoined,
+  );
+  return [updatedCharacter, updatedFaction];
 }
 
 export function leaveFaction(character: Character, faction: Faction): Faction {
