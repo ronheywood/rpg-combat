@@ -4,6 +4,12 @@
 **PR:** #41 (v5.0.0)  
 **Stories:** 5.1, 5.2, 5.3
 
+## Original Prompts
+
+> Reading issue 17 - I feel like we need an external mediator for leveling up, perhaps it needs to
+> subscribe to events from the combat component so that it can track damage and faction events, and
+> apply the level modifier to the characters when conditions are met?
+
 ---
 
 ## What went well
