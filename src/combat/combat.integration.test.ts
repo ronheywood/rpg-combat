@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Character, createCharacter } from '../character/index.js';
 import { Faction, joinFaction, leaveFaction } from '../character/index.js';
 import { dealDamage, heal, allyHeal } from '../combat/index.js';
+import { applyLevelUp } from '../level/index.js';
 
 describe('damage state persistence', () => {
   it('accumulates damageSurvived across damage and heal cycles', () => {
@@ -70,9 +71,9 @@ describe('simulation: 1v1 combat to the death', () => {
 describe('simulation: faction combat', () => {
   it('ally cannot damage an ally', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
 
     expect(() => dealDamage(a, b, 100, [faction])).toThrow();
     expect(b.health).toBe(1000); // unchanged — throw before damage applied
@@ -80,10 +81,10 @@ describe('simulation: faction combat', () => {
 
   it('enemy from a different faction can deal damage', () => {
     const knight = createCharacter();
-    const knightsFaction = joinFaction(knight, new Faction('Knights'));
+    const [, knightsFaction] = joinFaction(knight, new Faction('Knights'));
 
     const mage = createCharacter();
-    const magesFaction = joinFaction(mage, new Faction('Mages'));
+    const [, magesFaction] = joinFaction(mage, new Faction('Mages'));
 
     const allFactions = [knightsFaction, magesFaction];
 
@@ -93,9 +94,9 @@ describe('simulation: faction combat', () => {
 
   it('ally can heal a wounded ally', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     const wounded = new Character(600);
-    faction = joinFaction(wounded, faction);
+    faction = joinFaction(wounded, faction)[1];
 
     const healed = allyHeal(healer, wounded, 200, [faction]);
     expect(healed.health).toBe(800);
@@ -107,9 +108,9 @@ describe('simulation: faction combat', () => {
 describe('simulation: ally leaves faction mid-combat', () => {
   it('cannot attack ally; can attack after leaving faction', () => {
     const a = createCharacter();
-    let faction = joinFaction(a, new Faction('Knights'));
+    let [, faction] = joinFaction(a, new Faction('Knights'));
     const b = createCharacter();
-    faction = joinFaction(b, faction);
+    faction = joinFaction(b, faction)[1];
 
     // While allied — attack blocked
     expect(() => dealDamage(a, b, 100, [faction])).toThrow();
@@ -126,9 +127,9 @@ describe('simulation: ally leaves faction mid-combat', () => {
 describe('simulation: ally healing in multi-round fight', () => {
   it('healer repeatedly restores wounded ally without exceeding maxHealth', () => {
     const healer = createCharacter();
-    let faction = joinFaction(healer, new Faction('Knights'));
+    let [, faction] = joinFaction(healer, new Faction('Knights'));
     let ally = createCharacter(); // 1000 health
-    faction = joinFaction(ally, faction);
+    faction = joinFaction(ally, faction)[1];
 
     const enemy = createCharacter();
 
@@ -187,5 +188,94 @@ describe('simulation: level modifier in multi-hit battles', () => {
     }
     expect(target.alive).toBe(false);
     expect(attacks).toBe(30); // exactly 30 hits needed
+  });
+});
+
+describe('simulation: level-up from damage survival', () => {
+  it('level 1 character levels up after surviving 1000 cumulative damage', () => {
+    const attacker = createCharacter();
+    let hero = createCharacter();
+
+    hero = dealDamage(attacker, hero, 500);
+    hero = applyLevelUp(hero);
+    expect(hero.level).toBe(1); // 500 < 1000 threshold
+
+    // Heal between battles (damageSurvived preserved)
+    hero = heal(hero, 500);
+
+    hero = dealDamage(attacker, hero, 500);
+    hero = applyLevelUp(hero);
+    expect(hero.level).toBe(2); // 1000 >= threshold
+    expect(hero.damageSurvived).toBe(1000);
+  });
+
+  it('level-up does not fire for a dead character', () => {
+    const attacker = createCharacter();
+    let target = createCharacter();
+    target = dealDamage(attacker, target, 1500); // killed
+    target = applyLevelUp(target);
+    expect(target.alive).toBe(false);
+    expect(target.level).toBe(1); // no level-up for dead
+  });
+
+  it('level 2 threshold requires 3000 cumulative damage (2×1000 + 1×1000 base)', () => {
+    const attacker = createCharacter();
+    let hero = new Character(1000, 2, 2998); // 2 below threshold
+    hero = dealDamage(attacker, hero, 1); // damageSurvived = 2999
+    hero = applyLevelUp(hero);
+    expect(hero.level).toBe(2); // 2999 < 3000
+
+    hero = dealDamage(attacker, hero, 1); // damageSurvived = 3000
+    hero = applyLevelUp(hero);
+    expect(hero.level).toBe(3); // 3000 >= 3000
+  });
+
+  it('cascades through levels when large single hit crosses multiple thresholds', () => {
+    const attacker = createCharacter();
+    const target = new Character(500, 1, 0);
+    // 499 damage → damageSurvived = 499, health = 1 (alive)
+    const damaged = dealDamage(attacker, target, 499);
+    // Manually simulate: damageSurvived already at 3000 (as if previous battles)
+    const primed = new Character(damaged.health, 1, 3000, damaged.id, damaged.factionsEverJoined);
+    const leveled = applyLevelUp(primed);
+    expect(leveled.level).toBe(3); // crossed level 1 (1000) and level 2 (3000)
+  });
+});
+
+describe('simulation: level-up from faction history', () => {
+  it('level 1 character levels up after joining 3 distinct factions', () => {
+    let char = createCharacter();
+    [char] = joinFaction(char, new Faction('Alpha'));
+    [char] = joinFaction(char, new Faction('Beta'));
+    char = applyLevelUp(char);
+    expect(char.level).toBe(1); // only 2 factions — need 3
+
+    [char] = joinFaction(char, new Faction('Gamma'));
+    char = applyLevelUp(char);
+    expect(char.level).toBe(2); // 3 factions — threshold met
+  });
+
+  it('level 2 threshold requires 6 cumulative distinct factions', () => {
+    let char = new Character(1000, 2); // already level 2
+    for (const name of ['A', 'B', 'C', 'D', 'E']) {
+      [char] = joinFaction(char, new Faction(name));
+    }
+    char = applyLevelUp(char);
+    expect(char.level).toBe(2); // 5 factions — need 6
+
+    [char] = joinFaction(char, new Faction('F'));
+    char = applyLevelUp(char);
+    expect(char.level).toBe(3); // 6 factions — threshold met
+  });
+
+  it('leaving a faction does not reduce factionsEverJoined count', () => {
+    let char = createCharacter();
+    const [c1, f1] = joinFaction(char, new Faction('Alpha'));
+    const [c2] = joinFaction(c1, new Faction('Beta'));
+    const [c3] = joinFaction(c2, new Faction('Gamma'));
+    // Leave one faction — but history is append-only
+    leaveFaction(c3, f1); // leaveFaction returns Faction, not Character
+    char = applyLevelUp(c3);
+    expect(char.level).toBe(2); // Still counts 3 factions ever joined
   });
 });

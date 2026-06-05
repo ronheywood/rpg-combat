@@ -4,6 +4,7 @@ export class Character {
     public readonly level: number = 1,
     public readonly damageSurvived: number = 0,
     public readonly id: string = crypto.randomUUID(),
+    public readonly factionsEverJoined: readonly string[] = [],
   ) {}
 
   get alive(): boolean {
