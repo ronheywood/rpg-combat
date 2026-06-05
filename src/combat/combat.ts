@@ -1,6 +1,7 @@
 import { Character } from '../character/index.js';
 import type { Faction } from '../character/index.js';
 import { areAllies } from '../character/index.js';
+import { HealingObject, MagicalWeapon } from '../objects/index.js';
 
 function assertValidAmount(amount: number): void {
   if (!Number.isFinite(amount) || amount < 0) {
@@ -57,4 +58,35 @@ export function allyHeal(
   if (!areAllies(healer, target, factions))
     throw new Error('Characters must be allies to use allyHeal');
   return applyHeal(target, amount);
+}
+
+export function useWeapon(
+  attacker: Character,
+  weapon: MagicalWeapon,
+  target: Character,
+  factions?: readonly Faction[],
+): { target: Character; weapon: MagicalWeapon } {
+  if (weapon.destroyed) throw new Error('Cannot use a destroyed weapon');
+  const updatedTarget = dealDamage(attacker, target, weapon.damage, factions);
+  const updatedWeapon = new MagicalWeapon(weapon.damage, weapon.maxHealth, weapon.health - 1);
+  return { target: updatedTarget, weapon: updatedWeapon };
+}
+
+export function healFromObject(
+  character: Character,
+  object: HealingObject,
+  amount: number,
+): { character: Character; object: HealingObject } {
+  if (object.destroyed) throw new Error('Cannot use a destroyed healing object');
+  if (!character.alive) throw new Error('Dead characters cannot be healed');
+  assertValidAmount(amount);
+  const healing = Math.min(amount, object.health, character.maxHealth - character.health);
+  const updatedCharacter = new Character(
+    character.health + healing,
+    character.level,
+    character.damageSurvived,
+    character.id,
+  );
+  const updatedObject = new HealingObject(object.maxHealth, object.health - healing);
+  return { character: updatedCharacter, object: updatedObject };
 }
