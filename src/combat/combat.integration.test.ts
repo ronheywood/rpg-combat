@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Character, createCharacter } from '../character/index.js';
 import { Faction, joinFaction, leaveFaction } from '../character/index.js';
-import { dealDamage, heal, allyHeal, useWeapon, healFromObject } from '../combat/index.js';
+import { dealDamage, heal, useWeapon, healFromObject } from '../combat/index.js';
 import { HealingObject, MagicalWeapon } from '../objects/index.js';
 
 describe('damage state persistence', () => {
@@ -98,7 +98,7 @@ describe('simulation: faction combat', () => {
     const wounded = new Character(600);
     faction = joinFaction(wounded, faction)[1];
 
-    const healed = allyHeal(healer, wounded, 200, [faction]);
+    const healed = heal(healer, wounded, 200, [faction]);
     expect(healed.health).toBe(800);
     expect(healed.id).toBe(wounded.id);
     expect(healed.damageSurvived).toBe(wounded.damageSurvived);
@@ -141,12 +141,12 @@ describe('simulation: ally healing in multi-round fight', () => {
     expect(ally.damageSurvived).toBe(600);
 
     // Healer restores 400 — brings ally back to 800
-    ally = allyHeal(healer, ally, 400, [faction]);
+    ally = heal(healer, ally, 400, [faction]);
     expect(ally.health).toBe(800);
     expect(ally.damageSurvived).toBe(600); // damageSurvived preserved
 
     // Healer tries to overheal — capped at 1000
-    ally = allyHeal(healer, ally, 500, [faction]);
+    ally = heal(healer, ally, 500, [faction]);
     expect(ally.health).toBe(1000);
   });
 });

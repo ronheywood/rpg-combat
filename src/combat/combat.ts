@@ -48,27 +48,17 @@ export function dealDamage(
   );
 }
 
-export function heal(healer: Character, target: Character, amount: number): Character {
-  if (healer.id !== target.id)
-    throw new Error('heal() is for self-healing only; use allyHeal() to heal other characters');
-  if (!healer.alive) throw new Error('Dead characters cannot heal');
-  assertValidAmount(amount);
-  return applyHeal(target, amount);
-}
-
-export function allyHeal(
+export function heal(
   healer: Character,
   target: Character,
   amount: number,
-  factions: readonly Faction[],
+  factions?: readonly Faction[],
 ): Character {
-  if (healer.id === target.id)
-    throw new Error('Use heal(character, character, amount) for self-healing, not allyHeal()');
-  assertValidAmount(amount);
-  if (!healer.alive) throw new Error('Dead characters cannot heal others');
+  if (!healer.alive) throw new Error('Dead characters cannot heal');
   if (!target.alive) throw new Error('Cannot heal a dead character');
-  if (!areAllies(healer, target, factions))
-    throw new Error('Characters must be allies to use allyHeal');
+  assertValidAmount(amount);
+  if (healer.id !== target.id && !areAllies(healer, target, factions ?? []))
+    throw new Error('Characters must be allies to heal each other');
   return applyHeal(target, amount);
 }
 

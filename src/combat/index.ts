@@ -1,1 +1,1 @@
-export { dealDamage, heal, allyHeal, useWeapon, healFromObject } from './combat.js';
+export { dealDamage, heal, useWeapon, healFromObject } from './combat.js';
