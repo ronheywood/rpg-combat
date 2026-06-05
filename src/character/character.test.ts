@@ -20,6 +20,10 @@ describe('createCharacter', () => {
     expect(a).not.toBe(b);
   });
 
+  it('each instance has a unique id', () => {
+    expect(createCharacter().id).not.toBe(createCharacter().id);
+  });
+
   it('starts with 0 damage survived', () => {
     expect(createCharacter().damageSurvived).toBe(0);
   });

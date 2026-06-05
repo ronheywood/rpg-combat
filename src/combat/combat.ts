@@ -14,7 +14,7 @@ function levelModifier(attacker: Character, target: Character): number {
 }
 
 export function dealDamage(attacker: Character, target: Character, amount: number): Character {
-  if (attacker === target) throw new Error('A character cannot deal damage to itself');
+  if (attacker.id === target.id) throw new Error('A character cannot deal damage to itself');
   assertValidAmount(amount);
 
   const actualDamage = amount * levelModifier(attacker, target);
@@ -22,7 +22,7 @@ export function dealDamage(attacker: Character, target: Character, amount: numbe
   const survived = newHealth > 0;
   const newDamageSurvived = survived ? target.damageSurvived + actualDamage : target.damageSurvived;
 
-  return new Character(newHealth, target.level, newDamageSurvived);
+  return new Character(newHealth, target.level, newDamageSurvived, target.id);
 }
 
 export function heal(character: Character, amount: number): Character {
@@ -30,5 +30,5 @@ export function heal(character: Character, amount: number): Character {
   assertValidAmount(amount);
 
   const newHealth = Math.min(character.maxHealth, character.health + amount);
-  return new Character(newHealth, character.level, character.damageSurvived);
+  return new Character(newHealth, character.level, character.damageSurvived, character.id);
 }

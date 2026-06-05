@@ -1,2 +1,2 @@
 export { Character, createCharacter } from './character.js';
-export { joinFaction, leaveFaction } from './faction.js';
+export { Faction, joinFaction, leaveFaction, areAllies } from './faction.js';

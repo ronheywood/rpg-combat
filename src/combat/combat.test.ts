@@ -33,15 +33,22 @@ describe('dealDamage', () => {
     expect(dealDamage(attacker, target, 100).level).toBe(3);
   });
 
-  it('throws when attacker and target are the same instance', () => {
+  it('throws when attacker and target are the same character (same id)', () => {
     const character = createCharacter();
     expect(() => dealDamage(character, character, 100)).toThrow();
   });
 
-  it('does not treat same-stats different instances as self', () => {
+  it('does not treat different characters as self even with same stats', () => {
     const a = createCharacter();
     const b = createCharacter();
     expect(() => dealDamage(a, b, 100)).not.toThrow();
+  });
+
+  it('preserves target id across immutable copies', () => {
+    const attacker = createCharacter();
+    const target = createCharacter();
+    const damaged = dealDamage(attacker, target, 100);
+    expect(damaged.id).toBe(target.id);
   });
 
   it('throws on negative damage amount', () => {
