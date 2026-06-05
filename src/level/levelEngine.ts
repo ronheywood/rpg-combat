@@ -1,4 +1,4 @@
-import { Character } from '../character/index.js';
+import { Character } from '../character/character.js';
 
 export function damageThreshold(level: number): number {
   return ((level * (level + 1)) / 2) * 1000;

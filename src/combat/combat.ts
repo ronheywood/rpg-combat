@@ -2,6 +2,7 @@ import { Character } from '../character/index.js';
 import type { Faction } from '../character/index.js';
 import { areAllies } from '../character/index.js';
 import { HealingObject, MagicalWeapon } from '../objects/index.js';
+import { applyLevelUp } from '../level/index.js';
 
 function assertValidAmount(amount: number): void {
   if (!Number.isFinite(amount) || amount < 0) {
@@ -42,12 +43,8 @@ export function dealDamage(
   const survived = newHealth > 0;
   const newDamageSurvived = survived ? target.damageSurvived + actualDamage : target.damageSurvived;
 
-  return new Character(
-    newHealth,
-    target.level,
-    newDamageSurvived,
-    target.id,
-    target.factionsEverJoined,
+  return applyLevelUp(
+    new Character(newHealth, target.level, newDamageSurvived, target.id, target.factionsEverJoined),
   );
 }
 

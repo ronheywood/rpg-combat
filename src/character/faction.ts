@@ -1,4 +1,5 @@
 import { Character } from './character.js';
+import { applyLevelUp } from '../level/index.js';
 
 export class Faction {
   public readonly memberIds: readonly string[];
@@ -25,7 +26,7 @@ export function joinFaction(character: Character, faction: Faction): [Character,
     character.id,
     updatedFactionsEverJoined,
   );
-  return [updatedCharacter, updatedFaction];
+  return [applyLevelUp(updatedCharacter), updatedFaction];
 }
 
 export function leaveFaction(character: Character, faction: Faction): Faction {
