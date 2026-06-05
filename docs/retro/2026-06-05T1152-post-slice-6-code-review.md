@@ -4,6 +4,39 @@
 **PRs:** #42 (retro), #43–#49  
 **Version:** v5.0.0 → v6.0.1
 
+## Original Prompts
+
+> I don't see any code that invokes the levelEngine, other than tests? Is it redundant?
+
+> So in this test here there's a bit of a smell in the way the test orchestrates business logic —
+> if leveling up is a side effect of dealDamage then the test shouldn't be invoking it.
+> Make sure there's no other examples of these test smells
+
+> I don't see any integration test related to using magical objects either
+
+> There's 3 healing methods in combat, I see healFromObject doesn't call applyHeal, and heal is
+> actually Self Heal but doesn't provide any guard against an exploit that can bypass the factions
+> checks. Can you improve these please
+
+> These are the same function now — A lone wolf character is an ally of itself
+
+> This test needs a lone wolf scenario — but why is a character in a faction not an ally of itself?
+
+> No — a lone wolf with no factions Should be able to heal themselves, so a lone wolf needs to be
+> an ally of themselves. We're surely missing an integration test here if all tests are passing
+
+> Well a lone wolf certainly shouldn't be able to deal damage to themselves — so that areAllies
+> guard in deal damage is still valid
+
+> So the selfAttack guard is redundant — areAllies is the guard
+
+> Actually — the more specific error message adds value, leave it.
+> I gave you a lot of prompts since Slice 6 was completed — can you aggregate them all to do a final retro?
+
+> We seem to have stopped recording the prompts — can you retro fit them into the existing retro documents?
+
+---
+
 ## What We Did
 
 After Slice 6 was delivered the user reviewed the codebase and raised a series of

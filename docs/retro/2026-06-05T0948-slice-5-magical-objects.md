@@ -4,6 +4,10 @@
 **PR:** #39  
 **Stories:** 4.1, 4.2, 4.3
 
+## Original Prompts
+
+> Ok plan slice 5, and hand off to the rubber duck
+
 ---
 
 ## What went well

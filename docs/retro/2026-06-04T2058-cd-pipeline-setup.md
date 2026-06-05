@@ -6,6 +6,34 @@
 
 ---
 
+## Original Prompts
+
+> I have added some skills, and agents, some from https://github.com/trsdn/github-copilot-agent-template
+> and some from https://github.com/github/awesome-copilot/
+> Please ensure the LICENCE file and attributions for these opensource templates are correct
+
+> I am a new software engineer joining this project. I have been asked to complete this development
+> using an Agentic workflow. This is a production application, it must be maintained to a high
+> standard.
+>
+> I need you to review the codebase and set the environment up to succeed in a continuous delivery
+> environment using trunk based development.
+>
+> Ask me a number of clarifying questions, and use the skills and agents available to you to identify
+> what needs to be done to set us up with the prerequisites required for continuous delivery.
+
+> I'd like to do a retro before committing
+
+> I'd like to do a retro with each action, We might need to configure an agent to support this.
+> A Retro for me is the agent reporting on context that caused issues with its flow. The outcome
+> should be working process in the form of instructions, skills, or agents, or perhaps identify MCP
+> tools that might assist. The goal is to allow the Agent to achieve our goals more effectively.
+
+> OK - no retro, which means the retro agent didn't work. Also when you do a retro Please can you
+> include the original prompt, and whether we used plan mode (for context)
+
+---
+
 ## What We Did
 
 Set up a complete continuous delivery pipeline from scratch:
