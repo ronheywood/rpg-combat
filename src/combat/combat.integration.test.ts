@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { Character, createCharacter } from '../character/index.js';
 import { Faction, joinFaction, leaveFaction } from '../character/index.js';
 import { dealDamage, heal, allyHeal } from '../combat/index.js';
-import { applyLevelUp } from '../level/index.js';
 
 describe('damage state persistence', () => {
   it('accumulates damageSurvived across damage and heal cycles', () => {
@@ -197,14 +196,12 @@ describe('simulation: level-up from damage survival', () => {
     let hero = createCharacter();
 
     hero = dealDamage(attacker, hero, 500);
-    hero = applyLevelUp(hero);
     expect(hero.level).toBe(1); // 500 < 1000 threshold
 
     // Heal between battles (damageSurvived preserved)
     hero = heal(hero, 500);
 
     hero = dealDamage(attacker, hero, 500);
-    hero = applyLevelUp(hero);
     expect(hero.level).toBe(2); // 1000 >= threshold
     expect(hero.damageSurvived).toBe(1000);
   });
@@ -213,7 +210,6 @@ describe('simulation: level-up from damage survival', () => {
     const attacker = createCharacter();
     let target = createCharacter();
     target = dealDamage(attacker, target, 1500); // killed
-    target = applyLevelUp(target);
     expect(target.alive).toBe(false);
     expect(target.level).toBe(1); // no level-up for dead
   });
@@ -222,23 +218,18 @@ describe('simulation: level-up from damage survival', () => {
     const attacker = createCharacter();
     let hero = new Character(1000, 2, 2998); // 2 below threshold
     hero = dealDamage(attacker, hero, 1); // damageSurvived = 2999
-    hero = applyLevelUp(hero);
     expect(hero.level).toBe(2); // 2999 < 3000
 
     hero = dealDamage(attacker, hero, 1); // damageSurvived = 3000
-    hero = applyLevelUp(hero);
     expect(hero.level).toBe(3); // 3000 >= 3000
   });
 
   it('cascades through levels when large single hit crosses multiple thresholds', () => {
     const attacker = createCharacter();
-    const target = new Character(500, 1, 0);
-    // 499 damage → damageSurvived = 499, health = 1 (alive)
-    const damaged = dealDamage(attacker, target, 499);
-    // Manually simulate: damageSurvived already at 3000 (as if previous battles)
-    const primed = new Character(damaged.health, 1, 3000, damaged.id, damaged.factionsEverJoined);
-    const leveled = applyLevelUp(primed);
-    expect(leveled.level).toBe(3); // crossed level 1 (1000) and level 2 (3000)
+    // 1 damage away from crossing both level 1 (1000) and level 2 (3000) thresholds
+    const target = new Character(500, 1, 2999);
+    const result = dealDamage(attacker, target, 1); // damageSurvived becomes 3000
+    expect(result.level).toBe(3); // cascaded: 3000 >= threshold(1)=1000 and threshold(2)=3000
   });
 });
 
@@ -247,11 +238,9 @@ describe('simulation: level-up from faction history', () => {
     let char = createCharacter();
     [char] = joinFaction(char, new Faction('Alpha'));
     [char] = joinFaction(char, new Faction('Beta'));
-    char = applyLevelUp(char);
     expect(char.level).toBe(1); // only 2 factions — need 3
 
     [char] = joinFaction(char, new Faction('Gamma'));
-    char = applyLevelUp(char);
     expect(char.level).toBe(2); // 3 factions — threshold met
   });
 
@@ -260,11 +249,9 @@ describe('simulation: level-up from faction history', () => {
     for (const name of ['A', 'B', 'C', 'D', 'E']) {
       [char] = joinFaction(char, new Faction(name));
     }
-    char = applyLevelUp(char);
     expect(char.level).toBe(2); // 5 factions — need 6
 
     [char] = joinFaction(char, new Faction('F'));
-    char = applyLevelUp(char);
     expect(char.level).toBe(3); // 6 factions — threshold met
   });
 
@@ -275,7 +262,7 @@ describe('simulation: level-up from faction history', () => {
     const [c3] = joinFaction(c2, new Faction('Gamma'));
     // Leave one faction — but history is append-only
     leaveFaction(c3, f1); // leaveFaction returns Faction, not Character
-    char = applyLevelUp(c3);
+    char = c3;
     expect(char.level).toBe(2); // Still counts 3 factions ever joined
   });
 });
