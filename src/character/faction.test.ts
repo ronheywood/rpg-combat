@@ -117,10 +117,18 @@ describe('areAllies', () => {
     expect(areAllies(a, b, [])).toBe(false);
   });
 
-  it('returns false when a character is compared to themselves', () => {
+  it('returns true when a character is compared to themselves in a shared faction', () => {
     const a = createCharacter();
     const [, faction] = joinFaction(a, new Faction('Knights'));
-    expect(areAllies(a, a, [faction])).toBe(false);
+    expect(areAllies(a, a, [faction])).toBe(true);
+  });
+
+  it('a lone wolf with no factions is not an ally of anyone', () => {
+    const loneWolf = createCharacter();
+    const knight = createCharacter();
+    const [, knightsFaction] = joinFaction(knight, new Faction('Knights'));
+    expect(areAllies(loneWolf, knight, [knightsFaction])).toBe(false);
+    expect(areAllies(loneWolf, loneWolf, [])).toBe(false);
   });
 
   it('uses the factions provided — callers must thread current state', () => {
