@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Character, createCharacter } from '../character/index.js';
 import { Faction, joinFaction, leaveFaction } from '../character/index.js';
-import { dealDamage, heal, allyHeal } from './combat.js';
+import { MagicalWeapon, HealingObject } from '../objects/index.js';
+import { dealDamage, heal, allyHeal, useWeapon, healFromObject } from './combat.js';
 
 describe('dealDamage', () => {
   it('reduces target health by the damage amount', () => {
@@ -306,5 +307,165 @@ describe('heal', () => {
   it('throws on Infinity heal amount', () => {
     const character = new Character(800, 1);
     expect(() => heal(character, Infinity)).toThrow();
+  });
+});
+
+describe('useWeapon', () => {
+  it('deals the weapon fixed damage to the target', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(150, 10);
+    const target = createCharacter();
+    const result = useWeapon(attacker, weapon, target);
+    expect(result.target.health).toBe(850);
+  });
+
+  it('degrades weapon health by 1 per use', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(100, 5);
+    const target = createCharacter();
+    expect(useWeapon(attacker, weapon, target).weapon.health).toBe(4);
+  });
+
+  it('returns a new weapon instance, not the original', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(100, 5);
+    const target = createCharacter();
+    expect(useWeapon(attacker, weapon, target).weapon).not.toBe(weapon);
+  });
+
+  it('preserves target id after weapon damage', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(100, 5);
+    const target = createCharacter();
+    expect(useWeapon(attacker, weapon, target).target.id).toBe(target.id);
+  });
+
+  it('updates damageSurvived on target (via shared damage pipeline)', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(100, 5);
+    const target = createCharacter();
+    expect(useWeapon(attacker, weapon, target).target.damageSurvived).toBe(100);
+  });
+
+  it('applies level modifier (via shared damage pipeline)', () => {
+    const veteran = new Character(1000, 6);
+    const weapon = new MagicalWeapon(100, 5);
+    const recruit = new Character(1000, 1);
+    // veteran (level 6) attacks recruit (level 1) — 5+ gap → 1.5× damage = 150
+    expect(useWeapon(veteran, weapon, recruit).target.health).toBe(850);
+  });
+
+  it('throws when weapon is destroyed', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(100, 1, 0);
+    const target = createCharacter();
+    expect(() => useWeapon(attacker, weapon, target)).toThrow(/destroyed/i);
+  });
+
+  it('throws when attacker and target are the same character', () => {
+    const character = createCharacter();
+    const weapon = new MagicalWeapon(100, 5);
+    expect(() => useWeapon(character, weapon, character)).toThrow();
+  });
+
+  it('throws when attacker and target are allies', () => {
+    const a = createCharacter();
+    let faction = joinFaction(a, new Faction('Knights'));
+    const b = createCharacter();
+    faction = joinFaction(b, faction);
+    const weapon = new MagicalWeapon(100, 5);
+    expect(() => useWeapon(a, weapon, b, [faction])).toThrow();
+  });
+
+  it('allows weapon attack after target leaves the faction', () => {
+    const a = createCharacter();
+    let faction = joinFaction(a, new Faction('Knights'));
+    const b = createCharacter();
+    faction = joinFaction(b, faction);
+    faction = leaveFaction(b, faction);
+    const weapon = new MagicalWeapon(100, 5);
+    expect(() => useWeapon(a, weapon, b, [faction])).not.toThrow();
+  });
+
+  it('weapon becomes destroyed after maxHealth uses', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(10, 3);
+    const target = createCharacter();
+    const r1 = useWeapon(attacker, weapon, target);
+    const r2 = useWeapon(attacker, r1.weapon, target);
+    const r3 = useWeapon(attacker, r2.weapon, target);
+    expect(r3.weapon.destroyed).toBe(true);
+    expect(() => useWeapon(attacker, r3.weapon, target)).toThrow(/destroyed/i);
+  });
+});
+
+describe('healFromObject', () => {
+  it('heals character from a healing object', () => {
+    const character = new Character(800);
+    const object = new HealingObject(200);
+    expect(healFromObject(character, object, 100).character.health).toBe(900);
+  });
+
+  it('healing is capped at character maxHealth', () => {
+    const character = new Character(950);
+    const object = new HealingObject(500);
+    expect(healFromObject(character, object, 200).character.health).toBe(1000);
+  });
+
+  it('healing is capped at object remaining health', () => {
+    const character = new Character(500);
+    const object = new HealingObject(200, 50); // only 50 left
+    expect(healFromObject(character, object, 200).character.health).toBe(550);
+  });
+
+  it('consumes object health by the amount healed', () => {
+    const character = new Character(800);
+    const object = new HealingObject(200);
+    expect(healFromObject(character, object, 100).object.health).toBe(100);
+  });
+
+  it('object becomes destroyed when health reaches 0', () => {
+    const character = new Character(500);
+    const object = new HealingObject(200);
+    const result = healFromObject(character, object, 200);
+    expect(result.object.destroyed).toBe(true);
+  });
+
+  it('preserves character id after healing', () => {
+    const character = new Character(800);
+    const object = new HealingObject(200);
+    expect(healFromObject(character, object, 100).character.id).toBe(character.id);
+  });
+
+  it('preserves character damageSurvived after healing', () => {
+    const character = new Character(800, 1, 300);
+    const object = new HealingObject(200);
+    expect(healFromObject(character, object, 100).character.damageSurvived).toBe(300);
+  });
+
+  it('throws when healing object is destroyed', () => {
+    const character = new Character(800);
+    const object = new HealingObject(200, 0);
+    expect(() => healFromObject(character, object, 100)).toThrow(/destroyed/i);
+  });
+
+  it('throws when character is dead', () => {
+    const character = new Character(0);
+    const object = new HealingObject(200);
+    expect(() => healFromObject(character, object, 100)).toThrow(/dead/i);
+  });
+
+  it('throws on invalid amount', () => {
+    const character = new Character(800);
+    const object = new HealingObject(200);
+    expect(() => healFromObject(character, object, NaN)).toThrow(/amount/i);
+    expect(() => healFromObject(character, object, -1)).toThrow(/amount/i);
+  });
+
+  it('any character can use a healing object regardless of faction', () => {
+    const b = createCharacter();
+    const object = new HealingObject(200);
+    const damaged = new Character(800, 1, 0, b.id);
+    expect(() => healFromObject(damaged, object, 100)).not.toThrow();
   });
 });

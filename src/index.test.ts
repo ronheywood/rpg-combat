@@ -2,13 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   Character,
   Faction,
+  HealingObject,
+  MagicalWeapon,
   allyHeal,
   areAllies,
   createCharacter,
   dealDamage,
   heal,
+  healFromObject,
   joinFaction,
   leaveFaction,
+  useWeapon,
 } from './index.js';
 
 describe('package barrel exports', () => {
@@ -57,5 +61,34 @@ describe('package barrel exports', () => {
     const target = new Character(800);
     faction = joinFaction(target, faction);
     expect(allyHeal(healer, target, 100, [faction]).health).toBe(900);
+  });
+
+  it('exports HealingObject', () => {
+    const obj = new HealingObject(200);
+    expect(obj.health).toBe(200);
+    expect(obj.destroyed).toBe(false);
+  });
+
+  it('exports MagicalWeapon', () => {
+    const weapon = new MagicalWeapon(50, 10);
+    expect(weapon.damage).toBe(50);
+    expect(weapon.health).toBe(10);
+  });
+
+  it('exports useWeapon', () => {
+    const attacker = createCharacter();
+    const weapon = new MagicalWeapon(100, 5);
+    const target = createCharacter();
+    const result = useWeapon(attacker, weapon, target);
+    expect(result.target.health).toBe(900);
+    expect(result.weapon.health).toBe(4);
+  });
+
+  it('exports healFromObject', () => {
+    const character = new Character(800);
+    const object = new HealingObject(200);
+    const result = healFromObject(character, object, 100);
+    expect(result.character.health).toBe(900);
+    expect(result.object.health).toBe(100);
   });
 });
