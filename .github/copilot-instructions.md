@@ -166,17 +166,21 @@ If autopilot completes a task without running a retro, the user is entitled to r
 
 ## 14a. Run Rubber Duck Before Implementation
 
-**For every non-trivial implementation, run the rubber duck agent AFTER the plan is approved but BEFORE writing any code.**
+**For every non-trivial implementation or refactor, run the rubber duck agent AFTER the plan is approved but BEFORE writing any code.**
 
-The plan approval is the highest-leverage moment. Issues found before coding are free to fix; issues found after a release (as happened in Slice 1) require a breaking change.
+The plan approval is the highest-leverage moment. Issues found before coding are free to fix; issues found after a release (as happened in Slice 1) require a breaking change. "Feels obvious" or "feels small" are not valid reasons to skip — the Slice 4a refactor skipped this step and missed an aggregate root analysis opportunity.
 
 Trigger: plan exits plan mode with approval → rubber duck → implement.
 
-Skip for trivial single-file changes with no design decisions. Do not skip for:
+The only valid skip is a truly trivial single-file change with no design decisions (e.g. fixing a typo, adding a doc comment). **If you skip, you must explicitly note it in the retro with justification.** Silently skipping is a process violation.
+
+Do not skip for:
 
 - Any new type, class, or bounded context
+- Any refactor touching more than one file
 - Any change to a published API surface
 - Any cross-cutting concern (damage bridge, faction rules, etc.)
+- Any change to entity ownership or aggregate root structure
 
 ## 15. GitHub Packages Auth and Naming
 
