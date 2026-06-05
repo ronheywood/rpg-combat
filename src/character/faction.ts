@@ -38,6 +38,5 @@ export function leaveFaction(character: Character, faction: Faction): Faction {
 }
 
 export function areAllies(a: Character, b: Character, factions: readonly Faction[] = []): boolean {
-  if (a.id === b.id) return false;
   return factions.some((f) => f.memberIds.includes(a.id) && f.memberIds.includes(b.id));
 }
