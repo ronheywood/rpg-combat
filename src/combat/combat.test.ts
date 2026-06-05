@@ -259,54 +259,60 @@ describe('dealDamage — damageSurvived', () => {
 describe('heal', () => {
   it('increases character health by the heal amount', () => {
     const damaged = new Character(800, 1);
-    expect(heal(damaged, 100).health).toBe(900);
+    expect(heal(damaged, damaged, 100).health).toBe(900);
   });
 
   it('returns a new Character instance, not the original', () => {
     const damaged = new Character(800, 1);
-    expect(heal(damaged, 100)).not.toBe(damaged);
+    expect(heal(damaged, damaged, 100)).not.toBe(damaged);
   });
 
   it('health cannot exceed 1000 for level 1-5 characters', () => {
     const damaged = new Character(950, 1);
-    expect(heal(damaged, 200).health).toBe(1000);
+    expect(heal(damaged, damaged, 200).health).toBe(1000);
   });
 
   it('health cannot exceed 1500 for level 6+ characters', () => {
     const damaged = new Character(1400, 6);
-    expect(heal(damaged, 200).health).toBe(1500);
+    expect(heal(damaged, damaged, 200).health).toBe(1500);
   });
 
   it('heal at full health stays at full health', () => {
     const full = createCharacter();
-    expect(heal(full, 100).health).toBe(1000);
+    expect(heal(full, full, 100).health).toBe(1000);
   });
 
   it('preserves character level after healing', () => {
     const damaged = new Character(800, 3);
-    expect(heal(damaged, 100).level).toBe(3);
+    expect(heal(damaged, damaged, 100).level).toBe(3);
+  });
+
+  it('throws when healer and target are different characters', () => {
+    const character = new Character(800, 1);
+    const other = new Character(800, 1);
+    expect(() => heal(character, other, 100)).toThrow(/self-healing/i);
   });
 
   it('dead characters cannot heal', () => {
     const attacker = createCharacter();
     let target = createCharacter();
     target = dealDamage(attacker, target, 1000);
-    expect(() => heal(target, 100)).toThrow();
+    expect(() => heal(target, target, 100)).toThrow();
   });
 
   it('throws on negative heal amount', () => {
     const character = new Character(800, 1);
-    expect(() => heal(character, -50)).toThrow();
+    expect(() => heal(character, character, -50)).toThrow();
   });
 
   it('throws on NaN heal amount', () => {
     const character = new Character(800, 1);
-    expect(() => heal(character, NaN)).toThrow();
+    expect(() => heal(character, character, NaN)).toThrow();
   });
 
   it('throws on Infinity heal amount', () => {
     const character = new Character(800, 1);
-    expect(() => heal(character, Infinity)).toThrow();
+    expect(() => heal(character, character, Infinity)).toThrow();
   });
 });
 

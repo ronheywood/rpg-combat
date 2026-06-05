@@ -48,10 +48,12 @@ export function dealDamage(
   );
 }
 
-export function heal(character: Character, amount: number): Character {
-  if (!character.alive) throw new Error('Dead characters cannot heal');
+export function heal(healer: Character, target: Character, amount: number): Character {
+  if (healer.id !== target.id)
+    throw new Error('heal() is for self-healing only; use allyHeal() to heal other characters');
+  if (!healer.alive) throw new Error('Dead characters cannot heal');
   assertValidAmount(amount);
-  return applyHeal(character, amount);
+  return applyHeal(target, amount);
 }
 
 export function allyHeal(
@@ -60,7 +62,8 @@ export function allyHeal(
   amount: number,
   factions: readonly Faction[],
 ): Character {
-  if (healer.id === target.id) throw new Error('Use heal() for self-healing, not allyHeal()');
+  if (healer.id === target.id)
+    throw new Error('Use heal(character, character, amount) for self-healing, not allyHeal()');
   assertValidAmount(amount);
   if (!healer.alive) throw new Error('Dead characters cannot heal others');
   if (!target.alive) throw new Error('Cannot heal a dead character');
@@ -90,13 +93,7 @@ export function healFromObject(
   if (!character.alive) throw new Error('Dead characters cannot be healed');
   assertValidAmount(amount);
   const healing = Math.min(amount, object.health, character.maxHealth - character.health);
-  const updatedCharacter = new Character(
-    character.health + healing,
-    character.level,
-    character.damageSurvived,
-    character.id,
-    character.factionsEverJoined,
-  );
+  const updatedCharacter = applyHeal(character, healing);
   const updatedObject = new HealingObject(object.maxHealth, object.health - healing);
   return { character: updatedCharacter, object: updatedObject };
 }

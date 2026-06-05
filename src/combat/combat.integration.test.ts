@@ -16,7 +16,7 @@ describe('damage state persistence', () => {
     expect(hero.damageSurvived).toBe(500);
 
     // And the hero heals for 500
-    hero = heal(hero, 500);
+    hero = heal(hero, hero, 500);
     expect(hero.health).toBe(1000);
     expect(hero.damageSurvived).toBe(500); // healing does not reset damage survived
 
@@ -200,7 +200,7 @@ describe('simulation: level-up from damage survival', () => {
     expect(hero.level).toBe(1); // 500 < 1000 threshold
 
     // Heal between battles (damageSurvived preserved)
-    hero = heal(hero, 500);
+    hero = heal(hero, hero, 500);
 
     hero = dealDamage(attacker, hero, 500);
     expect(hero.level).toBe(2); // 1000 >= threshold

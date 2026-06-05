@@ -55,7 +55,8 @@ describe('package barrel exports', () => {
   });
 
   it('exports heal', () => {
-    expect(heal(new Character(800), 100).health).toBe(900);
+    const character = new Character(800);
+    expect(heal(character, character, 100).health).toBe(900);
   });
 
   it('exports allyHeal', () => {
