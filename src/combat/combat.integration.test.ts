@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createCharacter } from '../character/index.js';
-import { dealDamage, heal } from '../combat/index.js';
+import { Character, createCharacter } from '../character/index.js';
+import { Faction, joinFaction, leaveFaction } from '../character/index.js';
+import { dealDamage, heal, allyHeal } from '../combat/index.js';
 
 describe('damage state persistence', () => {
   it('accumulates damageSurvived across damage and heal cycles', () => {
@@ -24,5 +25,167 @@ describe('damage state persistence', () => {
     // Then the hero has 500 health and has sustained 1000 damage in total
     expect(hero.health).toBe(500);
     expect(hero.damageSurvived).toBe(1000);
+  });
+});
+
+describe('simulation: 1v1 combat to the death', () => {
+  it('attacker defeats target over multiple rounds', () => {
+    const attacker = createCharacter();
+    let target = createCharacter(); // 1000 health
+
+    target = dealDamage(attacker, target, 400);
+    expect(target.health).toBe(600);
+    expect(target.alive).toBe(true);
+
+    target = dealDamage(attacker, target, 400);
+    expect(target.health).toBe(200);
+    expect(target.alive).toBe(true);
+
+    target = dealDamage(attacker, target, 400);
+    expect(target.health).toBe(0);
+    expect(target.alive).toBe(false);
+  });
+
+  it('killing blow does not reduce health below 0', () => {
+    const attacker = createCharacter();
+    let target = new Character(100);
+
+    target = dealDamage(attacker, target, 500);
+    expect(target.health).toBe(0);
+  });
+
+  it('killing blow does not count toward damageSurvived', () => {
+    const attacker = createCharacter();
+    let target = createCharacter();
+
+    target = dealDamage(attacker, target, 400); // survives
+    const survivedBefore = target.damageSurvived;
+
+    target = dealDamage(attacker, target, 1000); // killing blow
+    expect(target.alive).toBe(false);
+    expect(target.damageSurvived).toBe(survivedBefore); // not incremented
+  });
+});
+
+describe('simulation: faction combat', () => {
+  it('ally cannot damage an ally', () => {
+    const a = createCharacter();
+    let faction = joinFaction(a, new Faction('Knights'));
+    const b = createCharacter();
+    faction = joinFaction(b, faction);
+
+    expect(() => dealDamage(a, b, 100, [faction])).toThrow();
+    expect(b.health).toBe(1000); // unchanged — throw before damage applied
+  });
+
+  it('enemy from a different faction can deal damage', () => {
+    const knight = createCharacter();
+    const knightsFaction = joinFaction(knight, new Faction('Knights'));
+
+    const mage = createCharacter();
+    const magesFaction = joinFaction(mage, new Faction('Mages'));
+
+    const allFactions = [knightsFaction, magesFaction];
+
+    const damagedMage = dealDamage(knight, mage, 200, allFactions);
+    expect(damagedMage.health).toBe(800);
+  });
+
+  it('ally can heal a wounded ally', () => {
+    const healer = createCharacter();
+    let faction = joinFaction(healer, new Faction('Knights'));
+    const wounded = new Character(600);
+    faction = joinFaction(wounded, faction);
+
+    const healed = allyHeal(healer, wounded, 200, [faction]);
+    expect(healed.health).toBe(800);
+    expect(healed.id).toBe(wounded.id);
+    expect(healed.damageSurvived).toBe(wounded.damageSurvived);
+  });
+});
+
+describe('simulation: ally leaves faction mid-combat', () => {
+  it('cannot attack ally; can attack after leaving faction', () => {
+    const a = createCharacter();
+    let faction = joinFaction(a, new Faction('Knights'));
+    const b = createCharacter();
+    faction = joinFaction(b, faction);
+
+    // While allied — attack blocked
+    expect(() => dealDamage(a, b, 100, [faction])).toThrow();
+
+    // b leaves the faction
+    faction = leaveFaction(b, faction);
+
+    // No longer allied — attack succeeds
+    const damaged = dealDamage(a, b, 100, [faction]);
+    expect(damaged.health).toBe(900);
+  });
+});
+
+describe('simulation: ally healing in multi-round fight', () => {
+  it('healer repeatedly restores wounded ally without exceeding maxHealth', () => {
+    const healer = createCharacter();
+    let faction = joinFaction(healer, new Faction('Knights'));
+    let ally = createCharacter(); // 1000 health
+    faction = joinFaction(ally, faction);
+
+    const enemy = createCharacter();
+
+    // Enemy deals 3 rounds of 200 damage (no factions — lone wolf enemy)
+    ally = dealDamage(enemy, ally, 200);
+    ally = dealDamage(enemy, ally, 200);
+    ally = dealDamage(enemy, ally, 200);
+    expect(ally.health).toBe(400);
+    expect(ally.damageSurvived).toBe(600);
+
+    // Healer restores 400 — brings ally back to 800
+    ally = allyHeal(healer, ally, 400, [faction]);
+    expect(ally.health).toBe(800);
+    expect(ally.damageSurvived).toBe(600); // damageSurvived preserved
+
+    // Healer tries to overheal — capped at 1000
+    ally = allyHeal(healer, ally, 500, [faction]);
+    expect(ally.health).toBe(1000);
+  });
+});
+
+describe('simulation: level modifier in multi-hit battles', () => {
+  it('high-level attacker kills low-level target faster (1.5× damage)', () => {
+    const veteran = new Character(1000, 6); // level 6
+    let recruit = new Character(1000, 1); // level 1 — 5 levels below
+
+    // 100 base damage × 1.5 = 150 effective
+    recruit = dealDamage(veteran, recruit, 100);
+    expect(recruit.health).toBe(850);
+    expect(recruit.damageSurvived).toBe(150);
+
+    recruit = dealDamage(veteran, recruit, 100);
+    expect(recruit.health).toBe(700);
+
+    // 7 hits to kill (7 × 150 = 1050 > 1000)
+    for (let i = 0; i < 5; i++) {
+      recruit = dealDamage(veteran, recruit, 100);
+    }
+    expect(recruit.alive).toBe(false);
+  });
+
+  it('high-level target tanks low-level attacker (0.5× damage)', () => {
+    const veteran = new Character(1500, 6); // level 6, maxHealth 1500
+    const recruit = new Character(1000, 1); // level 1 — 5 levels below veteran
+
+    // 100 base damage × 0.5 = 50 effective
+    const firstHit = dealDamage(recruit, veteran, 100);
+    expect(firstHit.health).toBe(1450);
+
+    // It takes 30 hits of 100 to kill the veteran (30 × 50 = 1500)
+    let target = veteran;
+    let attacks = 0;
+    while (target.alive && attacks < 35) {
+      target = dealDamage(recruit, target, 100);
+      attacks++;
+    }
+    expect(target.alive).toBe(false);
+    expect(attacks).toBe(30); // exactly 30 hits needed
   });
 });
