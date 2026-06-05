@@ -1,1 +1,1 @@
-export { dealDamage, heal } from './combat.js';
+export { dealDamage, heal, allyHeal } from './combat.js';
