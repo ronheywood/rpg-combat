@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Character, createCharacter } from '../character/index.js';
 import { Faction, joinFaction, leaveFaction } from '../character/index.js';
-import { dealDamage, heal, allyHeal } from '../combat/index.js';
+import { dealDamage, heal, allyHeal, useWeapon, healFromObject } from '../combat/index.js';
+import { HealingObject, MagicalWeapon } from '../objects/index.js';
 
 describe('damage state persistence', () => {
   it('accumulates damageSurvived across damage and heal cycles', () => {
@@ -264,5 +265,76 @@ describe('simulation: level-up from faction history', () => {
     leaveFaction(c3, f1); // leaveFaction returns Faction, not Character
     char = c3;
     expect(char.level).toBe(2); // Still counts 3 factions ever joined
+  });
+});
+
+describe('simulation: magical objects in combat', () => {
+  it('weapon deals fixed damage and loses 1 health per use', () => {
+    const attacker = createCharacter();
+    const target = createCharacter();
+    const weapon = new MagicalWeapon(150, 3);
+
+    let result = useWeapon(attacker, weapon, target);
+    expect(result.target.health).toBe(850);
+    expect(result.weapon.health).toBe(2);
+
+    result = useWeapon(attacker, result.weapon, result.target);
+    expect(result.target.health).toBe(700);
+    expect(result.weapon.health).toBe(1);
+  });
+
+  it('weapon is destroyed after health reaches 0 and cannot be used again', () => {
+    const attacker = createCharacter();
+    let target = createCharacter();
+    let weapon = new MagicalWeapon(100, 2);
+
+    ({ target, weapon } = useWeapon(attacker, weapon, target));
+    ({ target, weapon } = useWeapon(attacker, weapon, target));
+
+    expect(weapon.destroyed).toBe(true);
+    expect(() => useWeapon(attacker, weapon, target)).toThrow();
+  });
+
+  it('weapon damage counts toward target damageSurvived and can trigger level-up', () => {
+    const attacker = createCharacter();
+    let target = new Character(1000, 1, 500); // already 500 survived
+    const weapon = new MagicalWeapon(500, 5);
+
+    target = useWeapon(attacker, weapon, target).target;
+
+    expect(target.damageSurvived).toBe(1000);
+    expect(target.level).toBe(2); // threshold crossed via weapon damage
+  });
+
+  it('healing object restores character health up to object and character limits', () => {
+    let character = new Character(400);
+    let object = new HealingObject(300);
+
+    ({ character, object } = healFromObject(character, object, 200));
+    expect(character.health).toBe(600);
+    expect(object.health).toBe(100);
+
+    ({ character, object } = healFromObject(character, object, 200));
+    expect(character.health).toBe(700); // capped by object (100 left) not request (200)
+    expect(object.health).toBe(0);
+    expect(object.destroyed).toBe(true);
+  });
+
+  it('destroyed healing object cannot be used', () => {
+    const character = new Character(800);
+    const object = new HealingObject(100, 0);
+
+    expect(() => healFromObject(character, object, 50)).toThrow();
+  });
+
+  it('weapon respects faction ally rules — cannot attack an ally', () => {
+    const attacker = createCharacter();
+    const [, faction] = joinFaction(attacker, new Faction('Knights'));
+    const ally = createCharacter();
+    const alliedFaction = joinFaction(ally, faction)[1];
+    const weapon = new MagicalWeapon(100, 5);
+
+    expect(() => useWeapon(attacker, weapon, ally, [alliedFaction])).toThrow();
+    expect(ally.health).toBe(1000);
   });
 });
