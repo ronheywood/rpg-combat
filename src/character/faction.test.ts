@@ -123,12 +123,12 @@ describe('areAllies', () => {
     expect(areAllies(a, a, [faction])).toBe(true);
   });
 
-  it('a lone wolf with no factions is not an ally of anyone', () => {
+  it('a lone wolf with no factions is an ally of themselves', () => {
     const loneWolf = createCharacter();
     const knight = createCharacter();
     const [, knightsFaction] = joinFaction(knight, new Faction('Knights'));
     expect(areAllies(loneWolf, knight, [knightsFaction])).toBe(false);
-    expect(areAllies(loneWolf, loneWolf, [])).toBe(false);
+    expect(areAllies(loneWolf, loneWolf, [])).toBe(true);
   });
 
   it('uses the factions provided — callers must thread current state', () => {

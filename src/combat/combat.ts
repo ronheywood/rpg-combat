@@ -57,7 +57,7 @@ export function heal(
   if (!healer.alive) throw new Error('Dead characters cannot heal');
   if (!target.alive) throw new Error('Cannot heal a dead character');
   assertValidAmount(amount);
-  if (healer.id !== target.id && !areAllies(healer, target, factions ?? []))
+  if (!areAllies(healer, target, factions ?? []))
     throw new Error('Characters must be allies to heal each other');
   return applyHeal(target, amount);
 }

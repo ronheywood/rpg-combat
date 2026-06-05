@@ -29,6 +29,25 @@ describe('damage state persistence', () => {
   });
 });
 
+describe('simulation: lone wolf', () => {
+  it('a lone wolf with no factions can heal themselves', () => {
+    const attacker = createCharacter();
+    let loneWolf = createCharacter();
+
+    loneWolf = dealDamage(attacker, loneWolf, 400);
+    expect(loneWolf.health).toBe(600);
+
+    loneWolf = heal(loneWolf, loneWolf, 200);
+    expect(loneWolf.health).toBe(800);
+  });
+
+  it('a lone wolf cannot heal another lone wolf (no faction)', () => {
+    const healer = createCharacter();
+    const wounded = new Character(600);
+    expect(() => heal(healer, wounded, 200)).toThrow(/allies/i);
+  });
+});
+
 describe('simulation: 1v1 combat to the death', () => {
   it('attacker defeats target over multiple rounds', () => {
     const attacker = createCharacter();
