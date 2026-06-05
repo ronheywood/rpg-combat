@@ -1,63 +1,90 @@
 import { describe, expect, it } from 'vitest';
 import { createCharacter } from './character.js';
-import { joinFaction, leaveFaction } from './faction.js';
+import { Faction, areAllies, joinFaction, leaveFaction } from './faction.js';
 
-describe('faction membership', () => {
-  it('starts with no factions', () => {
-    expect(createCharacter().factions).toEqual([]);
-  });
-
-  it('starts with empty faction history', () => {
-    expect(createCharacter().factionHistory).toEqual([]);
-  });
-
-  it('join adds to factions', () => {
-    const character = joinFaction(createCharacter(), 'Knights');
-    expect(character.factions).toContain('Knights');
-  });
-
-  it('join adds to faction history', () => {
-    const character = joinFaction(createCharacter(), 'Knights');
-    expect(character.factionHistory).toContain('Knights');
-  });
-
-  it('leave removes from factions', () => {
-    let character = joinFaction(createCharacter(), 'Knights');
-    character = leaveFaction(character, 'Knights');
-    expect(character.factions).not.toContain('Knights');
-  });
-
-  it('leave does not remove from faction history', () => {
-    let character = joinFaction(createCharacter(), 'Knights');
-    character = leaveFaction(character, 'Knights');
-    expect(character.factionHistory).toContain('Knights');
-  });
-
-  it('joining a previously-left faction does not duplicate history', () => {
-    let character = joinFaction(createCharacter(), 'Knights');
-    character = leaveFaction(character, 'Knights');
-    character = joinFaction(character, 'Knights');
-    expect(character.factionHistory.filter((f) => f === 'Knights')).toHaveLength(1);
-  });
-
-  it('joining same faction twice is idempotent', () => {
-    let character = joinFaction(createCharacter(), 'Knights');
-    character = joinFaction(character, 'Knights');
-    expect(character.factions.filter((f) => f === 'Knights')).toHaveLength(1);
-    expect(character.factionHistory.filter((f) => f === 'Knights')).toHaveLength(1);
-  });
-
-  it('leave on a faction not currently joined is a no-op', () => {
-    const character = createCharacter();
-    expect(() => leaveFaction(character, 'Knights')).not.toThrow();
-    expect(leaveFaction(character, 'Knights').factions).toEqual([]);
+describe('Faction', () => {
+  it('starts with no members', () => {
+    expect(new Faction('Knights').memberIds).toEqual([]);
   });
 
   it('rejects empty faction name', () => {
-    expect(() => joinFaction(createCharacter(), '')).toThrow();
+    expect(() => new Faction('')).toThrow();
   });
 
   it('rejects whitespace-only faction name', () => {
-    expect(() => joinFaction(createCharacter(), '   ')).toThrow();
+    expect(() => new Faction('   ')).toThrow();
+  });
+});
+
+describe('joinFaction', () => {
+  it('adds character to faction memberIds', () => {
+    const character = createCharacter();
+    const faction = new Faction('Knights');
+    expect(joinFaction(character, faction).memberIds).toContain(character.id);
+  });
+
+  it('joining same character twice is idempotent', () => {
+    const character = createCharacter();
+    const faction = joinFaction(character, new Faction('Knights'));
+    const again = joinFaction(character, faction);
+    expect(again.memberIds.filter((id) => id === character.id)).toHaveLength(1);
+  });
+
+  it('does not modify the original faction', () => {
+    const faction = new Faction('Knights');
+    joinFaction(createCharacter(), faction);
+    expect(faction.memberIds).toHaveLength(0);
+  });
+});
+
+describe('leaveFaction', () => {
+  it('removes character from faction memberIds', () => {
+    const character = createCharacter();
+    const faction = joinFaction(character, new Faction('Knights'));
+    expect(leaveFaction(character, faction).memberIds).not.toContain(character.id);
+  });
+
+  it('leave on a character not in the faction is a no-op', () => {
+    const character = createCharacter();
+    const faction = new Faction('Knights');
+    expect(() => leaveFaction(character, faction)).not.toThrow();
+    expect(leaveFaction(character, faction).memberIds).toEqual([]);
+  });
+
+  it('a character that leaves all factions becomes a lone wolf', () => {
+    const character = createCharacter();
+    const faction = joinFaction(character, new Faction('Knights'));
+    const updated = leaveFaction(character, faction);
+    expect(updated.memberIds).toHaveLength(0);
+  });
+});
+
+describe('areAllies', () => {
+  it('returns true when both characters are in the same faction', () => {
+    const a = createCharacter();
+    const b = createCharacter();
+    const faction = joinFaction(b, joinFaction(a, new Faction('Knights')));
+    expect(areAllies(a, b, [faction])).toBe(true);
+  });
+
+  it('returns false when characters share no faction', () => {
+    const a = createCharacter();
+    const b = createCharacter();
+    const faction = joinFaction(a, new Faction('Knights'));
+    expect(areAllies(a, b, [faction])).toBe(false);
+  });
+
+  it('returns false when no factions are provided', () => {
+    const a = createCharacter();
+    const b = createCharacter();
+    expect(areAllies(a, b, [])).toBe(false);
+  });
+
+  it('returns true if either of multiple factions contains both', () => {
+    const a = createCharacter();
+    const b = createCharacter();
+    const mages = new Faction('Mages');
+    const sharedFaction = joinFaction(b, joinFaction(a, new Faction('Knights')));
+    expect(areAllies(a, b, [mages, sharedFaction])).toBe(true);
   });
 });
