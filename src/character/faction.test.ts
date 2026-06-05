@@ -30,6 +30,12 @@ describe('joinFaction', () => {
     expect(again.memberIds.filter((id) => id === character.id)).toHaveLength(1);
   });
 
+  it('returns the same faction instance when character is already a member', () => {
+    const character = createCharacter();
+    const faction = joinFaction(character, new Faction('Knights'));
+    expect(joinFaction(character, faction)).toBe(faction);
+  });
+
   it('does not modify the original faction', () => {
     const faction = new Faction('Knights');
     joinFaction(createCharacter(), faction);
@@ -49,6 +55,12 @@ describe('leaveFaction', () => {
     const faction = new Faction('Knights');
     expect(() => leaveFaction(character, faction)).not.toThrow();
     expect(leaveFaction(character, faction).memberIds).toEqual([]);
+  });
+
+  it('returns the same faction instance when character was not a member', () => {
+    const character = createCharacter();
+    const faction = new Faction('Knights');
+    expect(leaveFaction(character, faction)).toBe(faction);
   });
 
   it('a character that leaves all factions becomes a lone wolf', () => {
@@ -78,6 +90,22 @@ describe('areAllies', () => {
     const a = createCharacter();
     const b = createCharacter();
     expect(areAllies(a, b, [])).toBe(false);
+  });
+
+  it('returns false when a character is compared to themselves', () => {
+    const a = createCharacter();
+    const faction = joinFaction(a, new Faction('Knights'));
+    expect(areAllies(a, a, [faction])).toBe(false);
+  });
+
+  it('uses the factions provided — callers must thread current state', () => {
+    const a = createCharacter();
+    const b = createCharacter();
+    const v1 = joinFaction(b, joinFaction(a, new Faction('Knights')));
+    const v2 = leaveFaction(b, v1);
+    // stale snapshot reports allies incorrectly; only current state is correct
+    expect(areAllies(a, b, [v1])).toBe(true);
+    expect(areAllies(a, b, [v2])).toBe(false);
   });
 
   it('returns true if either of multiple factions contains both', () => {
